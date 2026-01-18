@@ -1,49 +1,34 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 df = pd.read_csv("StudentsPerformance.csv")
 
-print("Dataset Preview:\n", df.head())
-print("\nShape:", df.shape)
-print("\nColumns:", df.columns)
+df[['Sem1','Sem2','Sem3']] = df[['math score','reading score','writing score']]
+df['attendance'] = np.random.randint(60,100,len(df))
+df['avg'] = df[['Sem1','Sem2','Sem3']].mean(axis=1)
+df['consistency'] = df[['Sem1','Sem2','Sem3']].std(axis=1)
 
-print("\nScore Statistics:")
-print(df[['math score', 'reading score', 'writing score']].describe())
+df['risk'] = np.where((df['avg']<50)|(df['attendance']<70),'High',
+              np.where(df['avg']<65,'Medium','Low'))
 
-df['average_score'] = df[['math score', 'reading score', 'writing score']].mean(axis=1)
+difficulty = 100 - df[['Sem1','Sem2','Sem3']].mean()
+print("Attendance–Marks Correlation:", df['attendance'].corr(df['avg']))
 
-def performance(avg):
-    if avg >= 75:
-        return "Good"
-    elif avg >= 50:
-        return "Average"
-    else:
-        return "At Risk"
+for i in range(5):
+    plt.plot(['Sem1','Sem2','Sem3'], df.loc[i,['Sem1','Sem2','Sem3']])
+plt.title("Performance Progression"); plt.show()
 
-df['performance_category'] = df['average_score'].apply(performance)
+sns.heatmap(df[['Sem1','Sem2','Sem3']].corr(), annot=True)
+plt.title("Subject Heatmap"); plt.show()
 
-print("\nPerformance Count:")
-print(df['performance_category'].value_counts())
+sns.boxplot(data=df[['Sem1','Sem2','Sem3']])
+plt.title("Score Distribution"); plt.show()
 
-plt.hist(df['average_score'], bins=10)
-plt.title("Average Score Distribution")
-plt.xlabel("Average Score")
-plt.ylabel("Students")
-plt.show()
+plt.scatter(df['attendance'], df['avg'])
+plt.xlabel("Attendance"); plt.ylabel("Average Score")
+plt.title("Attendance vs Performance"); plt.show()
 
-df['performance_category'].value_counts().plot.pie(autopct='%1.1f%%')
-plt.title("Performance Categories")
-plt.ylabel("")
-plt.show()
-
-df[['math score', 'reading score', 'writing score']].mean().plot.bar()
-plt.title("Subject-wise Average Scores")
-plt.ylabel("Score")
-plt.show()
-
-df.groupby('gender')['average_score'].mean().plot.bar()
-plt.title("Gender-wise Performance")
-plt.ylabel("Average Score")
-plt.show()
-
-print("\nAnalysis Completed Successfully")
+df['risk'].value_counts().plot(kind='bar')
+plt.title("Dropout Risk Levels"); plt.show()
